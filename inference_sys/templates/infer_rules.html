@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>规则管理</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-hover tbody tr:hover {
+            background-color: #f5f5f5;
+            cursor: pointer;
+        }
+        .table .selected {
+            background-color: #d0e9c6;
+        }
+        .scrollable-table {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">规则管理</h1>
+        <div class="row">
+            <!-- 规则管理 -->
+            <div class="col-md-6">
+                <h3>规则管理</h3>
+                <div class="scrollable-table">
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>规则名称</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rulesTable">
+                            <!-- 动态填充规则 -->
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-primary mt-2" onclick="showAddRuleModal()">添加规则</button>
+                <button class="btn btn-danger mt-2" onclick="deleteSelectedRules()">删除选中规则</button>
+            </div>
+
+            <!-- 事实管理 -->
+            <div class="col-md-6">
+                <h3>事实管理</h3>
+                <div class="scrollable-table">
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>前提条件</th>
+                                <th>结论</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="factsTable">
+                            <!-- 动态填充事实 -->
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-primary mt-2" onclick="showAddFactModal()">添加事实</button>
+                <button class="btn btn-danger mt-2" onclick="deleteSelectedFacts()">删除选中事实</button>
+                <button class="btn btn-secondary mt-2" onclick="batchAddFacts()">批量添加事实</button> <!-- 新增按钮 -->
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 添加规则模态框 -->
+    <div class="modal" tabindex="-1" role="dialog" id="addRuleModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加规则</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRuleForm">
+                        <div class="form-group">
+                            <label for="addRuleName">规则名称</label>
+                            <input type="text" class="form-control" id="addRuleName">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="addRule()">保存</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑规则模态框 -->
+    <div class="modal" tabindex="-1" role="dialog" id="editRuleModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑规则</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editRuleForm">
+                        <div class="form-group">
+                            <label for="editRuleName">规则名称</label>
+                            <input type="text" class="form-control" id="editRuleName">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="saveRuleChanges">保存更改</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加事实模态框 -->
+    <div class="modal" tabindex="-1" role="dialog" id="addFactModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加事实</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addFactForm">
+                        <div class="form-group">
+                            <label for="addPreConditions">前提条件</label>
+                            <input type="text" class="form-control" id="addPreConditions">
+                        </div>
+                        <div class="form-group">
+                            <label for="addConclusion">结论</label>
+                            <input type="text" class="form-control" id="addConclusion">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="addFact()">保存</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑事实模态框 -->
+    <div class="modal" tabindex="-1" role="dialog" id="editFactModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑事实</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editFactForm">
+                        <div class="form-group">
+                            <label for="editPreConditions">前提条件</label>
+                            <input type="text" class="form-control" id="editPreConditions">
+                        </div>
+                        <div class="form-group">
+                            <label for="editConclusion">结论</label>
+                            <input type="text" class="form-control" id="editConclusion">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="saveFactChanges">保存更改</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 批量添加事实模态框 -->
+    <div class="modal" tabindex="-1" role="dialog" id="batchAddFactsModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">批量添加事实</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="batchFactsInput">输入事实（每行一个，格式：IF 前提条件(用空格间隔) THEN 结论）</label>
+                        <textarea class="form-control" id="batchFactsInput" rows="5"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="submitBatchFacts()">确定</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            loadRules();
+            loadFacts();
+
+            $('#saveRuleChanges').click(function() {
+                const id = $('#editRuleForm').data('id');
+                const name = $('#editRuleName').val();
+                editRule(id, name);
+            });
+
+            $('#saveFactChanges').click(function() {
+                const id = $('#editFactForm').data('id');
+                const preConditions = $('#editPreConditions').val();
+                const conclusion = $('#editConclusion').val();
+                editFact(id, preConditions, conclusion);
+            });
+        });
+
+        function loadRules() {
+            $.ajax({
+                url: '/infer_sys/operations/get_rules',
+                method: 'GET',
+                success: function(data) {
+                    const rulesTable = $('#rulesTable');
+                    rulesTable.empty();
+                    data.rules.forEach(function(rule) {
+                        rulesTable.append(
+                            `<tr data-id="${rule.id}">
+                                <td>${rule.id}</td>
+                                <td>${rule.name}</td>
+                                <td>
+                                    <button class="btn btn-warning btn-sm" onclick="showEditRuleModal(${rule.id}, '${rule.name}')">编辑</button>
+                                </td>
+                            </tr>`
+                        );
+                    });
+                    bindTableSelection('#rulesTable');
+                }
+            });
+        }
+
+        function loadFacts() {
+            $.ajax({
+                url: '/infer_sys/operations/get_facts',
+                method: 'GET',
+                success: function(data) {
+                    const factsTable = $('#factsTable');
+                    factsTable.empty();
+                    data.facts.forEach(function(fact) {
+                        factsTable.append(
+                            `<tr data-id="${fact.id}">
+                                <td>${fact.id}</td>
+                                <td>${fact.pre_conditions}</td>
+                                <td>${fact.conclusion}</td>
+                                <td>
+                                    <button class="btn btn-warning btn-sm" onclick="showEditFactModal(${fact.id}, '${fact.pre_conditions}', '${fact.conclusion}')">编辑</button>
+                                </td>
+                            </tr>`
+                        );
+                    });
+                    bindTableSelection('#factsTable');
+                }
+            });
+        }
+
+        function bindTableSelection(tableId) {
+            $(tableId + ' tr').click(function() {
+                $(this).toggleClass('selected');
+            });
+        }
+
+        function showAddRuleModal() {
+            $('#addRuleName').val('');
+            $('#addRuleModal').modal('show');
+        }
+
+        function showEditRuleModal(id, name) {
+            $('#editRuleForm').data('id', id);
+            $('#editRuleName').val(name);
+            $('#editRuleModal').modal('show');
+        }
+
+        function addRule() {
+            const name = $('#addRuleName').val();
+            $.ajax({
+                url: '/infer_sys/operations/add_rule',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ rule_name: name }),
+                success: function(response) {
+                    alert(response.msg);
+                    loadRules();
+                    $('#addRuleModal').modal('hide');
+                }
+            });
+        }
+
+        function editRule(id, newName) {
+            $.ajax({
+                url: '/infer_sys/operations/edit_rule',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ id: id, new_name: newName }),
+                success: function(response) {
+                    alert(response.msg);
+                    loadRules();
+                    $('#editRuleModal').modal('hide');
+                }
+            });
+        }
+
+        function showAddFactModal() {
+            $('#addPreConditions').val('');
+            $('#addConclusion').val('');
+            $('#addFactModal').modal('show');
+        }
+
+        function showEditFactModal(id, preConditions, conclusion) {
+            $('#editFactForm').data('id', id);
+            $('#editPreConditions').val(preConditions);
+            $('#editConclusion').val(conclusion);
+            $('#editFactModal').modal('show');
+        }
+
+        function addFact() {
+            const preConditions = $('#addPreConditions').val();
+            const conclusion = $('#addConclusion').val();
+            $.ajax({
+                url: '/infer_sys/operations/add_fact',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ pre_conditions: preConditions, conclusion: conclusion }),
+                success: function(response) {
+                    alert(response.msg);
+                    loadFacts();
+                    $('#addFactModal').modal('hide');
+                }
+            });
+        }
+
+        function editFact(id, newPreConditions, newConclusion) {
+            $.ajax({
+                url: '/infer_sys/operations/edit_fact',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ id: id, new_pre_conditions: newPreConditions, new_conclusion: newConclusion }),
+                success: function(response) {
+                    alert(response.msg);
+                    loadFacts();
+                    $('#editFactModal').modal('hide');
+                }
+            });
+        }
+
+        function deleteSelectedRules() {
+            const selected = $('#rulesTable .selected');
+            if (selected.length === 0) {
+                alert('请选择至少一个规则进行删除。');
+                return;
+            }
+
+            selected.each(function() {
+                const ruleName = $(this).find('td:nth-child(2)').text();
+                $.ajax({
+                    url: '/infer_sys/operations/delete_rule',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ rule_name: ruleName }),
+                    success: function(response) {
+                        if (response.code === 100201) {
+                            const confirmDelete = confirm(response.msg);
+                            if (confirmDelete) {
+                                $.ajax({
+                                    url: '/infer_sys/operations/delete_rule',
+                                    method: 'POST',
+                                    contentType: 'application/json',
+                                    data: JSON.stringify({ rule_name: ruleName, force: true }),
+                                    success: function(deleteResponse) {
+                                        alert(deleteResponse.msg);
+                                        loadRules();
+                                    }
+                                });
+                            }
+                        } else {
+                            alert(response.msg);
+                            loadRules();
+                        }
+                    }
+                });
+            });
+        }
+
+        function deleteSelectedFacts() {
+                    const selected = $('#factsTable .selected');
+                    if (selected.length === 0) {
+                        alert('请选择至少一个事实进行删除。');
+                        return;
+                    }
+
+                    selected.each(function() {
+                        const id = $(this).data('id');
+                        $.ajax({
+                            url: '/infer_sys/operations/delete_fact',
+                            method: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ conclusion_id: id }),
+                            success: function(response) {
+                                alert(response.msg);
+                                loadFacts();
+                            }
+                        });
+                    });
+                }
+        function batchAddFacts() {
+            $('#batchFactsInput').val(''); // 清空文本框
+            $('#batchAddFactsModal').modal('show'); // 显示模态框
+        }
+
+        function submitBatchFacts() {
+            const input = $('#batchFactsInput').val().trim();
+            if (!input) {
+                alert('请输入至少一条事实。');
+                return;
+            }
+
+            const lines = input.split('\n');
+            const facts = [];
+
+            for (const line of lines) {
+                const match = line.match(/^IF (.+) THEN (.+)$/i);
+                if (match) {
+                    const pre_conditions = match[1].trim();
+                    const conclusion = match[2].trim();
+                    facts.push({ pre_conditions, conclusion });
+                } else {
+                    alert(`格式错误: ${line}`);
+                    return;
+                }
+            }
+
+            $.ajax({
+                url: '/infer_sys/operations/batch_add_facts',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ facts: facts }),
+                success: function(response) {
+                    alert(response.msg);
+                    loadFacts();
+                    $('#batchAddFactsModal').modal('hide');
+                }
+            });
+        }
+
+
+
+    </script>
+</body>
+</html>

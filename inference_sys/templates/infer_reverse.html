@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>逆向推理</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .scrollable-table {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f5f5f5;
+            cursor: pointer;
+        }
+        .table .selected {
+            background-color: #d0e9c6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">逆向推理</h1>
+        <div class="form-group">
+            <label>选择目标结论：</label>
+            <div class="scrollable-table">
+                <table class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            <th>结论</th>
+                        </tr>
+                    </thead>
+                    <tbody id="conclusionsTable">
+                        <!-- 动态填充结论 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="startBackwardChaining()">开始推理</button>
+        <div id="result" class="mt-4"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            loadConclusions();
+        });
+
+        function loadConclusions() {
+            $.ajax({
+                url: '/infer_sys/operations/get_facts_conclusions',
+                method: 'GET',
+                success: function(response) {
+                    if (response.code === 100200) {
+                        const conclusionsTable = $('#conclusionsTable');
+                        conclusionsTable.empty();
+                        response.conclusions.forEach(function(conclusion) {
+                            conclusionsTable.append(
+                                `<tr onclick="selectConclusion(this)"><td>${conclusion}</td></tr>`
+                            );
+                        });
+                    } else {
+                        alert('无法加载结论列表');
+                    }
+                }
+            });
+        }
+
+        function selectConclusion(row) {
+            $('#conclusionsTable tr').removeClass('selected');
+            $(row).addClass('selected');
+        }
+
+        function startBackwardChaining() {
+            const selectedRow = $('#conclusionsTable .selected');
+            if (selectedRow.length === 0) {
+                alert('请选择一个目标结论');
+                return;
+            }
+            const goal = selectedRow.find('td').text();
+
+            $.ajax({
+                url: '/infer_sys/operations/reverse_fact',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ goal: goal }),
+                success: function(response) {
+                    if (response.code === 100200) {
+                        let resultHtml = '<h3>推理成功：</h3><ul>';
+                        response.steps.forEach(step => {
+                            resultHtml += `<li>${step}</li>`;
+                        });
+                        resultHtml += '</ul>';
+                        $('#result').html(resultHtml);
+                    } else {
+                        $('#result').text(response.msg);
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
